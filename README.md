@@ -1,2 +1,2 @@
-# labyrinth-algorithm
-A self solving labyrinth based on a algorithm for unversity purposes.
+# Self solving maze based on an algorithm
+### Made for university purposes by Benjamin Meier, Louis Baumgart, Jonas Kaiser, Emre Gök
