@@ -1,6 +1,5 @@
 """
 TODOS:
-- Spielfeld einlesen
 - Algorithmus implementieren der Ziel (x_goal und y_goal findet)
 - Angegebene Dimensionen auf Sinn überprüfen (70:30/16:9)
 - Geschwindigkeit über Parameter bestimmen (pygame clock)
@@ -52,6 +51,7 @@ class Labyrinth:
         self.readFieldData()
         self.isStartPositionAWall()
         self.initialize()
+        self.searchExit()
 
     # Initialize pygame
     def initialize(self):
@@ -129,5 +129,23 @@ class Labyrinth:
             # Close program
             exit()
 
+    """
+    BFS algorithm to solve and find the exit in the maze
+    create matrix with 0s by size of X_FIELD_DIMENSION x Y_FIELD_DIMENSION
+    1 => our starting point from x_start and y_start (self.walls[y][x])
 
-Game = Labyrinth(25, 0, 0)
+    """
+
+    def searchExit(self):
+        walls_with_zeros = [
+            [0 for i in range(self.X_FIELD_DIMENSION)] for j in range(self.Y_FIELD_DIMENSION)]
+        # insert 1 which is our starting point
+        walls_with_zeros[self.y_start][self.x_start] = 1
+        print(walls_with_zeros)
+
+    def checkForValidDimensions(self):
+        if (self.X_FIELD_DIMENSION or self.Y_FIELD_DIMENSION) == 0:
+            print("WARNING: Your maze dimensions are empty.")
+
+
+Game = Labyrinth(25, 1, 1)
