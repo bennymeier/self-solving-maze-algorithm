@@ -39,6 +39,7 @@ class Labyrinth:
 
     # Walls
     WALLS = None
+    BFS_WALLS = None
 
     # Constructor, overwrite default values
     def __init__(self, speed, x, y):
@@ -51,7 +52,8 @@ class Labyrinth:
         self.readFieldData()
         self.isStartPositionAWall()
         self.initialize()
-        self.searchExit()
+        self.buildBFSWalls()
+        self.makeSteps()
 
     # Initialize pygame
     def initialize(self):
@@ -133,15 +135,43 @@ class Labyrinth:
     BFS algorithm to solve and find the exit in the maze
     create matrix with 0s by size of X_FIELD_DIMENSION x Y_FIELD_DIMENSION
     1 => our starting point from x_start and y_start (self.walls[y][x])
-
+    Everywhere around 1 we put 2 , if there is no wall
+    Everywhere around 2 we put 3 , if there is no wall
+    and so on…
+    once we put a number at the ending point, we stop. This number is actually the minimal path length
     """
 
-    def searchExit(self):
+    def buildBFSWalls(self):
         walls_with_zeros = [
-            [0 for i in range(self.X_FIELD_DIMENSION)] for j in range(self.Y_FIELD_DIMENSION)]
+            [0 for _ in range(self.X_FIELD_DIMENSION)] for _ in range(self.Y_FIELD_DIMENSION)]
         # insert 1 which is our starting point
         walls_with_zeros[self.y_start][self.x_start] = 1
-        print(walls_with_zeros)
+        self.BFS_WALLS = walls_with_zeros
+
+    def makeSteps(self):
+        k = 0
+        # GOAL: x: 23, y: 24
+        while self.BFS_WALLS[24][23] == 0:
+            k += 1
+            self.makeStep(k)
+        print("SOLVED: ", self.BFS_WALLS)
+
+    def makeStep(self, k):
+        # m => 0 matrix
+        # a => original matrix
+        BFS_MAZE = self.BFS_WALLS
+        ORIGINAL_MAZE = self.WALLS
+        for i in range(len(BFS_MAZE)):
+            for j in range(len(BFS_MAZE[i])):
+                if BFS_MAZE[i][j] == k:
+                    if i > 0 and BFS_MAZE[i-1][j] == 0 and ORIGINAL_MAZE[i-1][j] == 0:
+                        BFS_MAZE[i-1][j] = k + 1
+                    if j > 0 and BFS_MAZE[i][j-1] == 0 and ORIGINAL_MAZE[i][j-1] == 0:
+                        BFS_MAZE[i][j-1] = k + 1
+                    if i < len(BFS_MAZE)-1 and BFS_MAZE[i+1][j] == 0 and ORIGINAL_MAZE[i+1][j] == 0:
+                        BFS_MAZE[i+1][j] = k + 1
+                    if j < len(BFS_MAZE[i])-1 and BFS_MAZE[i][j+1] == 0 and ORIGINAL_MAZE[i][j+1] == 0:
+                        BFS_MAZE[i][j+1] = k + 1
 
     def checkForValidDimensions(self):
         if (self.X_FIELD_DIMENSION or self.Y_FIELD_DIMENSION) == 0:
