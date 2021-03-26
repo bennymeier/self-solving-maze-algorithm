@@ -85,6 +85,7 @@ class Labyrinth:
 
     # Read file for building the maze
     def readFieldData(self):
+        # read file in text mode
         with open("field.txt", 'rt') as file:
             # X dimension of field
             x_dimension = int(file.readline())
@@ -159,39 +160,30 @@ class Labyrinth:
         walls_with_zeros[self.y_start][self.x_start] = 1
         self.BFS_WALLS = walls_with_zeros
 
-    # Draw the shortest path
-    def drawShortestPath(self):
-        shortest_path = self.getShortedPath()
-        # iterate through shortest_path arra
-        for row in range(1, len(shortest_path) - 1):
-            coordinates = shortest_path[row]
-            x = coordinates[1]
-            y = coordinates[0]
-            # draw circle to path coordinates
-            self.drawCircle(x, y, self.YELLOW)
-            pg.display.flip()
-            # set speed to low for better visualization
-            self.clock.tick(self.SPEED/5)
-
     # Find the shortest path and return it
     def getShortedPath(self):
         BFS_MAZE = self.BFS_WALLS
         row, col = (self.y_goal, self.x_goal)
         counter = BFS_MAZE[row][col]
         the_path = [(row, col)]
+        # count until the target is reached (which is 1)
         while counter > 1:
+            # up
             if row > 0 and BFS_MAZE[row - 1][col] == counter - 1:
                 row, col = row - 1, col
                 the_path.append((row, col))
                 counter -= 1
+            # left
             elif col > 0 and BFS_MAZE[row][col - 1] == counter - 1:
                 row, col = row, col - 1
                 the_path.append((row, col))
                 counter -= 1
+            # down
             elif row < len(BFS_MAZE) - 1 and BFS_MAZE[row + 1][col] == counter - 1:
                 row, col = row+1, col
                 the_path.append((row, col))
                 counter -= 1
+            # right
             elif col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col + 1] == counter - 1:
                 row, col = row, col + 1
                 the_path.append((row, col))
@@ -241,6 +233,20 @@ class Labyrinth:
                     self.drawCircle(self.x_goal, self.y_goal, self.WHITE)
                     pg.display.update()
                     self.clock.tick(self.SPEED)
+
+    # Draw the shortest path
+    def drawShortestPath(self):
+        shortest_path = self.getShortedPath()
+        # iterate through shortest_path arra
+        for row in range(1, len(shortest_path) - 1):
+            coordinates = shortest_path[row]
+            x = coordinates[1]
+            y = coordinates[0]
+            # draw circle to path coordinates
+            self.drawCircle(x, y, self.YELLOW)
+            pg.display.flip()
+            # set speed to low for better visualization
+            self.clock.tick(self.SPEED/5)
 
     # Checking if given field dimensions are valid
     # Checking for: emptiness, smaller than 10 if format is between 16:9 or 9:16
