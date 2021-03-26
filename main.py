@@ -1,30 +1,33 @@
 import pygame as pg
 
+
 class Labyrinth:
-    # Default Start Position
+    # Default start position
     x_start = 2
     y_start = 2
 
-    # Default Goal Position
+    # Default goal position
     x_goal = 23
     y_goal = 24
 
     # Default window/field settings
+    WINDOW_TITLE = "Self solving maze based on an algorithm by LouisB, EmreG, JonasK, BenjaminM"
     WINDOW_WIDTH = 750
     WINDOW_HEIGHT = 700
     BLOCK_SIZE = 25
     BLOCK_MIDDLE_SIZE = BLOCK_SIZE / 2
-    SPEED = 50  # Defines how many milliseconds a step has to take, till the next step can be done
+    # Defines how many milliseconds a step has to take, till the next step can be done
+    SPEED = 50
     X_FIELD_DIMENSION = 0
     Y_FIELD_DIMENSION = 0
 
     # RGB Colors
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
+    RED = (255, 87, 51)
     GREEN = (0, 128, 0)
-    BLUE = (0, 0, 255)
-    PURPLE = (128, 0, 128)
+    BLUE = (7, 67, 182)
+    YELLOW = (255, 255, 0)
 
     # General
     WINDOW = None
@@ -32,8 +35,8 @@ class Labyrinth:
     isGameActive = True
 
     # Walls
-    WALLS = None
-    BFS_WALLS = None
+    WALLS = []
+    BFS_WALLS = []
 
     clock = pg.time.Clock()
 
@@ -51,13 +54,13 @@ class Labyrinth:
         self.buildBFSWalls()
         self.initialize()
 
-    # Initialize pygame
+    # Initialize pygame, set window title, set window height/width
     def initialize(self):
         pg.init()
         self.WINDOW = pg.display.set_mode(
             (self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
         self.CLOCK = pg.time.Clock()
-        pg.display.set_caption("Algorithm based self solving maze")
+        pg.display.set_caption(self.WINDOW_TITLE)
         counter = 0
 
         while self.isGameActive:
@@ -65,8 +68,9 @@ class Labyrinth:
                 # Set isGameActive to False because user pressed quit
                 if event.type == pg.QUIT:
                     self.isGameActive = False
-            # Set background color
+            # check if the things are already drawn (prevents flackyness)
             if counter == 0:
+                # Set background color
                 self.WINDOW.fill(self.WHITE)
                 # draw goal position
                 self.drawCircle(self.x_goal, self.y_goal, self.RED)
@@ -84,13 +88,17 @@ class Labyrinth:
             # X dimension of field
             x_dimension = int(file.readline())
             self.X_FIELD_DIMENSION = x_dimension
+            # set window width, which dependents on X dimension ( + 1 for extra space)
+            self.WINDOW_WIDTH = (x_dimension + 1) * self.BLOCK_SIZE
             # Y dimension of field
             y_dimension = int(file.readline())
             self.Y_FIELD_DIMENSION = y_dimension
-            # Checking if the given values for the field dimensions are valid, closing if not
+            # set window height, which dependents on Y dimension ( + 1 for extra space)
+            self.WINDOW_HEIGHT = (y_dimension + 1) * self.BLOCK_SIZE
+            # checking if the given values for the field dimensions are valid, closing if not
             if(self.checkForValidDimensions() == False):
                 exit()
-            # Read rows and create always a new array until \n/line breaks come in
+            # read rows and create always a new array until \n/line breaks come in
             rows = file.read().splitlines()
             cols = []
             for line in rows:
@@ -157,7 +165,7 @@ class Labyrinth:
             x = coordinates[1]
             y = coordinates[0]
             # draw circle to path coordinates
-            self.drawCircle(x, y, self.PURPLE)
+            self.drawCircle(x, y, self.YELLOW)
             pg.display.flip()
             # set speed to low for better visualization
             self.clock.tick(self.SPEED/5)
@@ -247,4 +255,4 @@ class Labyrinth:
 
 
 # speed, xStart, yStart, xGoal, yGoal
-Game = Labyrinth(75, 1, 1, 2, 22)
+Game = Labyrinth(65, 1, 1, 2, 22)
