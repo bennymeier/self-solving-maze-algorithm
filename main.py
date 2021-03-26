@@ -28,6 +28,7 @@ class Labyrinth:
     GREEN = (0, 128, 0)
     BLUE = (7, 67, 182)
     YELLOW = (255, 255, 0)
+    ORANGE = (255, 127, 80)
 
     # General
     WINDOW = None
@@ -71,9 +72,9 @@ class Labyrinth:
             # check if the things are already drawn (prevents flackyness)
             if counter == 0:
                 # Set background color
-                self.WINDOW.fill(self.WHITE)
+                self.WINDOW.fill(self.BLACK)
                 # draw goal position
-                self.drawCircle(self.x_goal, self.y_goal, self.RED)
+                self.drawCircle(self.x_goal, self.y_goal, self.WHITE)
                 # draw start position
                 self.drawCircle(self.x_start, self.y_start, self.GREEN)
                 # draw walls
@@ -95,34 +96,36 @@ class Labyrinth:
             self.Y_FIELD_DIMENSION = y_dimension
             # set window height, which dependents on Y dimension ( + 1 for extra space)
             self.WINDOW_HEIGHT = (y_dimension + 1) * self.BLOCK_SIZE
+
             # checking if the given values for the field dimensions are valid, closing if not
-            if(self.checkForValidDimensions() == False):
+            if self.areDimensionsValid() == False:
                 exit()
-            # read rows and create always a new array until \n/line breaks come in
+
+            # read rows and create always a new array until \n (line breaks) come in
             rows = file.read().splitlines()
             cols = []
             for line in rows:
-                # splitlines() creates string arrays
-                # convert array values from type string to int
+                # splitlines() creates string arrays e.g. ['0', '1', ...]
+                # convert array values from type string to int e.g. [0, 1, ...]
                 lineToInt = list(map(int, line.split()))
                 cols.append(lineToInt)
             self.WALLS = cols
 
     # Draw all walls
     def drawWalls(self):
-        for line, lineValue in enumerate(self.WALLS):
-            for column, columnValue in enumerate(lineValue):
-                if columnValue == 1:
-                    xPosStart = (column) * self.BLOCK_SIZE
+        for row, rowValue in enumerate(self.WALLS):
+            for col, colValue in enumerate(rowValue):
+                # check for walls which are 1s
+                if colValue == 1:
+                    xPosStart = col * self.BLOCK_SIZE
                     xPosEnd = xPosStart + self.BLOCK_SIZE
-                    # +12 weil draw.line von dem pixel aus + die hälfte nach unten zeichnet und + die hälfte nach unten, da 25 ein Block ist also +12 hier mal, sonst am oberen Rand nur hälfte zusehen
-                    yPos = line * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
+                    yPos = row * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
                     self.drawWall(xPosStart, yPos, xPosEnd)
         pg.display.update()
 
     # Draw wall
     def drawWall(self, x_start, y_current, x_end):
-        pg.draw.line(self.WINDOW, self.BLACK, (x_start, y_current),
+        pg.draw.line(self.WINDOW, self.BLUE, (x_start, y_current),
                      (x_end, y_current), self.BLOCK_SIZE)
 
     # Draw circle at given x, y coordinates and color
@@ -206,6 +209,7 @@ class Labyrinth:
     # Make a step and increase number in BFS_MAZE
     # BFS_MAZE = matrix filled with 0s and one 1 (start position)
     # ORIGINAL_MAZE = matrix filled with 0s and 1s (0 = space, 1 = wall)
+    # compare BFS_MAZE with ORIGINAL_MAZE for same row + col and check if it's 0 (no wall)
     def makeStep(self, counter):
         BFS_MAZE = self.BFS_WALLS
         ORIGINAL_MAZE = self.WALLS
@@ -214,30 +218,33 @@ class Labyrinth:
             # iterate over columns
             for col in range(len(BFS_MAZE[row])):
                 if BFS_MAZE[row][col] == counter:
+                    # going up (current row - 1, column stays same)
                     if row > 0 and BFS_MAZE[row - 1][col] == 0 and ORIGINAL_MAZE[row - 1][col] == 0:
                         BFS_MAZE[row - 1][col] = counter + 1
-                        self.drawCircle(col, row - 1, self.BLUE)
-
+                        self.drawCircle(col, row - 1, self.ORANGE)
+                    # going left (row stays same, current column - 1)
                     if col > 0 and BFS_MAZE[row][col - 1] == 0 and ORIGINAL_MAZE[row][col - 1] == 0:
                         BFS_MAZE[row][col - 1] = counter + 1
-                        self.drawCircle(col - 1, row, self.BLUE)
-
-                    if row < len(BFS_MAZE) - 1 and BFS_MAZE[row+1][col] == 0 and ORIGINAL_MAZE[row+1][col] == 0:
+                        self.drawCircle(col - 1, row, self.ORANGE)
+                    # going down (current row + 1, column stays same)
+                    if row < len(BFS_MAZE) - 1 and BFS_MAZE[row + 1][col] == 0 and ORIGINAL_MAZE[row + 1][col] == 0:
                         BFS_MAZE[row+1][col] = counter + 1
-                        self.drawCircle(col, row + 1, self.BLUE)
-
-                    if col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col+1] == 0 and ORIGINAL_MAZE[row][col+1] == 0:
+                        self.drawCircle(col, row + 1, self.ORANGE)
+                    # going right (row stays same, current column + 1)
+                    if col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col + 1] == 0 and ORIGINAL_MAZE[row][col + 1] == 0:
                         BFS_MAZE[row][col+1] = counter + 1
-                        self.drawCircle(col + 1, row, self.BLUE)
+                        self.drawCircle(col + 1, row, self.ORANGE)
+
                     # draw start circle again with the given color
                     self.drawCircle(self.x_start, self.y_start, self.GREEN)
                     # draw goal circle again with the given color
-                    self.drawCircle(self.x_goal, self.y_goal, self.RED)
+                    self.drawCircle(self.x_goal, self.y_goal, self.WHITE)
                     pg.display.update()
                     self.clock.tick(self.SPEED)
 
-    # Checking if given field dimensions are valid. Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
-    def checkForValidDimensions(self):
+    # Checking if given field dimensions are valid
+    # Checking for: emptiness, smaller than 10 if format is between 16:9 or 9:16
+    def areDimensionsValid(self):
         SIXTEEN_BY_NINE_CONSTANT = 1.78
         X_DEVIDED_BY_Y = self.X_FIELD_DIMENSION/self.Y_FIELD_DIMENSION
         Y_DEVIDED_BY_X = self.Y_FIELD_DIMENSION/self.X_FIELD_DIMENSION
