@@ -1,8 +1,3 @@
-"""
-TODOS:
-- 10 Bonuspunkte, wenn Programm kürzesten Pfad anzeigt von Start zu Ziel
-"""
-
 import pygame as pg
 
 
@@ -43,15 +38,17 @@ class Labyrinth:
     clock = pg.time.Clock()
 
     # Constructor, overwrite default values
-    def __init__(self, speed, x, y):
+    def __init__(self, speed, xStart, yStart, xEnd, yEnd):
         # Overwrite default values
         self.SPEED = speed
-        self.x_start = x
-        self.y_start = y
+        self.x_start = xStart
+        self.y_start = yStart
+        self.x_goal = xEnd
+        self.y_goal = yEnd
 
         # Check if start position is not a wall otherwise quit
         self.readFieldData()
-        self.isStartPositionAWall()
+        self.isStartOrGoalPositionAWall()
         self.buildBFSWalls()
         self.initialize()
 
@@ -122,20 +119,33 @@ class Labyrinth:
 
     # Draw start position point
     def drawStartPosition(self):
-        pg.draw.circle(self.WINDOW, self.GREEN, (self.x_start * self.BLOCK_SIZE + 12,
-                                                 self.y_start * self.BLOCK_SIZE + 12), 6, 0)
+        pg.draw.circle(self.WINDOW, self.GREEN, (self.x_start * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE,
+                                                 self.y_start * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE), 6, 0)
 
     # Draw goal position point
     def drawGoalPosition(self):
-        pg.draw.circle(self.WINDOW, self.RED, (self.x_goal * self.BLOCK_SIZE + 12,
-                                               self.y_goal * self.BLOCK_SIZE + 12), 6, 0)
+        pg.draw.circle(self.WINDOW, self.RED, (self.x_goal * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE,
+                                               self.y_goal * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE), 6, 0)
 
-    # Check if start position is a wall (1 == wall, 0 == way/free space)
-    def isStartPositionAWall(self):
+    # Draw shortest path line
+    def drawPathLine(self, x, y):
+        x_coordinate = x * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
+        y_coordinate = y * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
+        pg.draw.line(self.WINDOW, self.GREEN,
+                     (x_coordinate, y_coordinate + 20), (x_coordinate, y_coordinate + 20), 6)
+
+    # Check if start or goal position is a wall (1 == wall, 0 == way/free space)
+    def isStartOrGoalPositionAWall(self):
         res = self.WALLS[self.y_start][self.x_start]
         if res == 1:
             print(
                 "ERROR: Your start position is a wall. Please choose another x and y coordinate.")
+            # Close program
+            exit()
+        res = self.WALLS[self.y_goal][self.x_goal]
+        if res == 1:
+            print(
+                "ERROR: Your goal position is a wall. Please choose another x and y coordinate.")
             # Close program
             exit()
 
@@ -158,11 +168,40 @@ class Labyrinth:
 
     def makeSteps(self):
         k = 0
-        # GOAL: x: 23, y: 24
-        while self.BFS_WALLS[24][23] == 0:
+        while self.BFS_WALLS[self.y_goal][self.x_goal] == 0:
             k += 1
             self.makeStep(k)
-        print("SOLVED: ", self.BFS_WALLS)
+        self.drawShortestPath()
+
+    def drawShortestPath(self):
+        shortest_path = self.getShortedPath()
+        for coordinates in shortest_path:
+            self.drawPathLine(coordinates[0], coordinates[1])
+            pg.display.flip()
+
+    def getShortedPath(self):
+        BFS_MAZE = self.BFS_WALLS
+        i, j = (24, 23)
+        k = BFS_MAZE[i][j]
+        the_path = [(i, j)]
+        while k > 1:
+            if i > 0 and BFS_MAZE[i - 1][j] == k-1:
+                i, j = i-1, j
+                the_path.append((i, j))
+                k -= 1
+            elif j > 0 and BFS_MAZE[i][j - 1] == k-1:
+                i, j = i, j-1
+                the_path.append((i, j))
+                k -= 1
+            elif i < len(BFS_MAZE) - 1 and BFS_MAZE[i + 1][j] == k-1:
+                i, j = i+1, j
+                the_path.append((i, j))
+                k -= 1
+            elif j < len(BFS_MAZE[i]) - 1 and BFS_MAZE[i][j + 1] == k-1:
+                i, j = i, j+1
+                the_path.append((i, j))
+                k -= 1
+        return the_path
 
     def makeStep(self, k):
         # m => 0 matrix
@@ -215,4 +254,4 @@ class Labyrinth:
             return False
 
 
-Game = Labyrinth(75, 1, 1)
+Game = Labyrinth(75, 1, 1, 21, 23)
