@@ -128,11 +128,11 @@ class Labyrinth:
                                                self.y_goal * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE), 6, 0)
 
     # Draw shortest path line
-    def drawPathLine(self, x, y):
+    def drawCircle(self, x, y):
         x_coordinate = x * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
         y_coordinate = y * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
-        pg.draw.line(self.WINDOW, self.GREEN,
-                     (x_coordinate, y_coordinate + 20), (x_coordinate, y_coordinate + 20), 6)
+        pg.draw.circle(self.WINDOW, self.PURPLE, (x_coordinate,
+                                               y_coordinate), 6, 0)
 
     # Check if start or goal position is a wall (1 == wall, 0 == way/free space)
     def isStartOrGoalPositionAWall(self):
@@ -166,68 +166,75 @@ class Labyrinth:
         walls_with_zeros[self.y_start][self.x_start] = 1
         self.BFS_WALLS = walls_with_zeros
 
+    # Make all steps until we reach the goal, increase counter
     def makeSteps(self):
-        k = 0
+        counter = 0
         while self.BFS_WALLS[self.y_goal][self.x_goal] == 0:
-            k += 1
-            self.makeStep(k)
+            counter += 1
+            self.makeStep(counter)
         self.drawShortestPath()
 
+    # Draw the shortest path, line by line
     def drawShortestPath(self):
-        shortest_path = self.getShortedPath()
+        shortest_path = self.getShortestPath()
+        print("Path: ", shortest_path)
         for coordinates in shortest_path:
-            self.drawPathLine(coordinates[0], coordinates[1])
+            x = coordinates[1]
+            y = coordinates[0]
+            self.drawCircle(x, y)
             pg.display.flip()
 
-    def getShortedPath(self):
+    # Get the shortest path from start to target
+    def getShortestPath(self):
         BFS_MAZE = self.BFS_WALLS
-        i, j = (24, 23)
-        k = BFS_MAZE[i][j]
+        i, j = (self.x_goal, self.y_goal)
+        counter = BFS_MAZE[i][j]
         the_path = [(i, j)]
-        while k > 1:
-            if i > 0 and BFS_MAZE[i - 1][j] == k-1:
+        while counter > 1:
+            if i > 0 and BFS_MAZE[i - 1][j] == counter-1:
                 i, j = i-1, j
                 the_path.append((i, j))
-                k -= 1
-            elif j > 0 and BFS_MAZE[i][j - 1] == k-1:
+                counter -= 1
+            elif j > 0 and BFS_MAZE[i][j - 1] == counter-1:
                 i, j = i, j-1
                 the_path.append((i, j))
-                k -= 1
-            elif i < len(BFS_MAZE) - 1 and BFS_MAZE[i + 1][j] == k-1:
+                counter -= 1
+            elif i < len(BFS_MAZE) - 1 and BFS_MAZE[i + 1][j] == counter-1:
                 i, j = i+1, j
                 the_path.append((i, j))
-                k -= 1
-            elif j < len(BFS_MAZE[i]) - 1 and BFS_MAZE[i][j + 1] == k-1:
+                counter -= 1
+            elif j < len(BFS_MAZE[i]) - 1 and BFS_MAZE[i][j + 1] == counter-1:
                 i, j = i, j+1
                 the_path.append((i, j))
-                k -= 1
+                counter -= 1
         return the_path
 
-    def makeStep(self, k):
+    # Make one step in the maze and draw the dot
+    def makeStep(self, counter):
         # m => 0 matrix
         # a => original matrix
         BFS_MAZE = self.BFS_WALLS
         ORIGINAL_MAZE = self.WALLS
         for i in range(len(BFS_MAZE)):
             for j in range(len(BFS_MAZE[i])):
-                if BFS_MAZE[i][j] == k:
+                if BFS_MAZE[i][j] == counter:
                     if i > 0 and BFS_MAZE[i-1][j] == 0 and ORIGINAL_MAZE[i-1][j] == 0:
-                        BFS_MAZE[i-1][j] = k + 1
+                        BFS_MAZE[i-1][j] = counter + 1
                         pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
                                                                 i * self.BLOCK_SIZE + 12), 6, 0)
 
                     if j > 0 and BFS_MAZE[i][j-1] == 0 and ORIGINAL_MAZE[i][j-1] == 0:
-                        BFS_MAZE[i][j-1] = k + 1
+                        BFS_MAZE[i][j-1] = counter + 1
                         pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
                                                                 i * self.BLOCK_SIZE + 12), 6, 0)
 
                     if i < len(BFS_MAZE)-1 and BFS_MAZE[i+1][j] == 0 and ORIGINAL_MAZE[i+1][j] == 0:
-                        BFS_MAZE[i+1][j] = k + 1
+                        BFS_MAZE[i+1][j] = counter + 1
                         pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
                                                                 i * self.BLOCK_SIZE + 12), 6, 0)
 
                     if j < len(BFS_MAZE[i])-1 and BFS_MAZE[i][j+1] == 0 and ORIGINAL_MAZE[i][j+1] == 0:
-                        BFS_MAZE[i][j+1] = k + 1
+                        BFS_MAZE[i][j+1] = counter + 1
                         pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
                                                                 i * self.BLOCK_SIZE + 12), 6, 0)
                     self.drawStartPosition()
@@ -235,8 +242,8 @@ class Labyrinth:
                     pg.display.update()
                     self.clock.tick(self.SPEED)
 
-    # Checking if given field dimensions are valid. Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
-
+    # Checking if given field dimensions are valid.
+    # Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
     def checkForValidDimensions(self):
         SIXTEEN_BY_NINE_CONSTANT = 1.78
         X_DEVIDED_BY_Y = self.X_FIELD_DIMENSION/self.Y_FIELD_DIMENSION
@@ -254,4 +261,4 @@ class Labyrinth:
             return False
 
 
-Game = Labyrinth(75, 1, 1, 21, 23)
+Game = Labyrinth(300, 1, 1, 23, 4)
