@@ -1,8 +1,5 @@
 """
 TODOS:
-- Algorithmus implementieren der Ziel (x_goal und y_goal findet)
-- Angegebene Dimensionen auf Sinn überprüfen (70:30/16:9)
-- Geschwindigkeit über Parameter bestimmen (pygame clock)
 - 10 Bonuspunkte, wenn Programm kürzesten Pfad anzeigt von Start zu Ziel
 """
 
@@ -11,19 +8,19 @@ import pygame as pg
 
 class Labyrinth:
     # Default Start Position
-    x_start = 0
-    y_start = 0
+    x_start = 2
+    y_start = 2
 
     # Default Goal Position
-    x_goal = 18
-    y_goal = 0
+    x_goal = 23
+    y_goal = 24
 
     # Default window/field settings
     WINDOW_WIDTH = 950
     WINDOW_HEIGHT = 700
     BLOCK_SIZE = 25
     BLOCK_MIDDLE_SIZE = BLOCK_SIZE / 2
-    SPEED = 20
+    SPEED = 50  # Defines how many milliseconds a step has to take, till the next step can be done
     X_FIELD_DIMENSION = 0
     Y_FIELD_DIMENSION = 0
 
@@ -32,6 +29,8 @@ class Labyrinth:
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
     GREEN = (0, 128, 0)
+    BLUE = (0, 0, 255)
+    PURPLE = (128, 0, 128)
 
     WINDOW = None
     CLOCK = None
@@ -41,27 +40,30 @@ class Labyrinth:
     WALLS = None
     BFS_WALLS = None
 
+    clock = pg.time.Clock()
+
     # Constructor, overwrite default values
     def __init__(self, speed, x, y):
         # Overwrite default values
-        self.speed = speed
+        self.SPEED = speed
         self.x_start = x
         self.y_start = y
 
         # Check if start position is not a wall otherwise quit
         self.readFieldData()
         self.isStartPositionAWall()
-        self.initialize()
         self.buildBFSWalls()
-        self.makeSteps()
+        self.initialize()
 
     # Initialize pygame
+
     def initialize(self):
         pg.init()
         self.WINDOW = pg.display.set_mode(
             (self.WINDOW_WIDTH, self.WINDOW_HEIGHT))
         self.CLOCK = pg.time.Clock()
         pg.display.set_caption("Algorithm based self solving maze")
+        counter = 0
 
         while self.isGameActive:
             for event in pg.event.get():
@@ -69,12 +71,15 @@ class Labyrinth:
                 if event.type == pg.QUIT:
                     self.isGameActive = False
             # Set background color
-            self.WINDOW.fill(self.WHITE)
-            # Draw all walls, draw start position, draw goal position
-            self.drawWalls()
-            self.drawStartPosition()
-            self.drawGoalPosition()
-            pg.display.update()
+            if(counter == 0):
+                self.WINDOW.fill(self.WHITE)
+                # Draw all walls, draw start position, draw goal position
+                self.drawGoalPosition()
+                self.drawStartPosition()
+                self.drawWalls()
+                pg.display.update()
+                self.makeSteps()
+                counter += 1
 
     # Read file for building the maze
     def readFieldData(self):
@@ -85,6 +90,9 @@ class Labyrinth:
             # Y dimension of field
             y_dimension = int(file.readline())
             self.Y_FIELD_DIMENSION = y_dimension
+            # Checking if the given values for the field dimensions are valid, closing if not
+            if(self.checkForValidDimensions() == False):
+                exit()
             # Read rows and create always a new array until \n/line breaks come in
             rows = file.read().splitlines()
             cols = []
@@ -166,16 +174,45 @@ class Labyrinth:
                 if BFS_MAZE[i][j] == k:
                     if i > 0 and BFS_MAZE[i-1][j] == 0 and ORIGINAL_MAZE[i-1][j] == 0:
                         BFS_MAZE[i-1][j] = k + 1
+                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
+                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+
                     if j > 0 and BFS_MAZE[i][j-1] == 0 and ORIGINAL_MAZE[i][j-1] == 0:
                         BFS_MAZE[i][j-1] = k + 1
+                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
+                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+
                     if i < len(BFS_MAZE)-1 and BFS_MAZE[i+1][j] == 0 and ORIGINAL_MAZE[i+1][j] == 0:
                         BFS_MAZE[i+1][j] = k + 1
+                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
+                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+
                     if j < len(BFS_MAZE[i])-1 and BFS_MAZE[i][j+1] == 0 and ORIGINAL_MAZE[i][j+1] == 0:
                         BFS_MAZE[i][j+1] = k + 1
+                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
+                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+                    self.drawStartPosition()
+                    self.drawGoalPosition()
+                    pg.display.update()
+                    self.clock.tick(self.SPEED)
+
+    # Checking if given field dimensions are valid. Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
 
     def checkForValidDimensions(self):
+        SIXTEEN_BY_NINE_CONSTANT = 1.78
+        X_DEVIDED_BY_Y = self.X_FIELD_DIMENSION/self.Y_FIELD_DIMENSION
+        Y_DEVIDED_BY_X = self.Y_FIELD_DIMENSION/self.X_FIELD_DIMENSION
         if (self.X_FIELD_DIMENSION or self.Y_FIELD_DIMENSION) == 0:
             print("WARNING: Your maze dimensions are empty.")
+            return False
+        elif (self.X_FIELD_DIMENSION < 10 or self.Y_FIELD_DIMENSION < 10):
+            print("WARNING: Minimum size is 10 blocks by 10 blocks, so atleast {fDIMENSION_BY_BLOCKS} by {fDIMENSION_BY_BLOCKS}.").format(
+                fDIMENSION_BY_BLOCKS=10*self.BLOCK_SIZE)
+            return False
+        elif (X_DEVIDED_BY_Y > SIXTEEN_BY_NINE_CONSTANT or Y_DEVIDED_BY_X > SIXTEEN_BY_NINE_CONSTANT):
+            print(
+                "WARNING: Smallest possible format for field dimensions are 16:9 or 9:16.")
+            return False
 
 
-Game = Labyrinth(25, 1, 1)
+Game = Labyrinth(75, 1, 1)
