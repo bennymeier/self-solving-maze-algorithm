@@ -27,6 +27,7 @@ class Labyrinth:
     BLUE = (0, 0, 255)
     PURPLE = (128, 0, 128)
 
+    # General
     WINDOW = None
     CLOCK = None
     isGameActive = True
@@ -53,7 +54,6 @@ class Labyrinth:
         self.initialize()
 
     # Initialize pygame
-
     def initialize(self):
         pg.init()
         self.WINDOW = pg.display.set_mode(
@@ -68,11 +68,13 @@ class Labyrinth:
                 if event.type == pg.QUIT:
                     self.isGameActive = False
             # Set background color
-            if(counter == 0):
+            if counter == 0:
                 self.WINDOW.fill(self.WHITE)
-                # Draw all walls, draw start position, draw goal position
-                self.drawGoalPosition()
-                self.drawStartPosition()
+                # draw goal position
+                self.drawCircle(self.x_goal, self.y_goal, self.RED)
+                # draw start position
+                self.drawCircle(self.x_start, self.y_start, self.GREEN)
+                # draw walls
                 self.drawWalls()
                 pg.display.update()
                 self.makeSteps()
@@ -117,22 +119,12 @@ class Labyrinth:
         pg.draw.line(self.WINDOW, self.BLACK, (x_start, y_current),
                      (x_end, y_current), self.BLOCK_SIZE)
 
-    # Draw start position point
-    def drawStartPosition(self):
-        pg.draw.circle(self.WINDOW, self.GREEN, (self.x_start * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE,
-                                                 self.y_start * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE), 6, 0)
-
-    # Draw goal position point
-    def drawGoalPosition(self):
-        pg.draw.circle(self.WINDOW, self.RED, (self.x_goal * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE,
-                                               self.y_goal * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE), 6, 0)
-
-    # Draw shortest path line
-    def drawCircle(self, x, y):
+    # Draw circle at given x, y coordinates and color
+    def drawCircle(self, x, y, color):
         x_coordinate = x * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
         y_coordinate = y * self.BLOCK_SIZE + self.BLOCK_MIDDLE_SIZE
-        pg.draw.circle(self.WINDOW, self.PURPLE, (x_coordinate,
-                                               y_coordinate), 6, 0)
+        pg.draw.circle(self.WINDOW, color, (x_coordinate,
+                                            y_coordinate), 6, 0)
 
     # Check if start or goal position is a wall (1 == wall, 0 == way/free space)
     def isStartOrGoalPositionAWall(self):
@@ -149,16 +141,8 @@ class Labyrinth:
             # Close program
             exit()
 
-    """
-    BFS algorithm to solve and find the exit in the maze
-    create matrix with 0s by size of X_FIELD_DIMENSION x Y_FIELD_DIMENSION
-    1 => our starting point from x_start and y_start (self.walls[y][x])
-    Everywhere around 1 we put 2 , if there is no wall
-    Everywhere around 2 we put 3 , if there is no wall
-    and so on…
-    once we put a number at the ending point, we stop. This number is actually the minimal path length
-    """
-
+    # Create matrix with 0s by size of X_FIELD_DIMENSION * Y_FIELD_DIMENSION
+    # Set the start point to 1
     def buildBFSWalls(self):
         walls_with_zeros = [
             [0 for _ in range(self.X_FIELD_DIMENSION)] for _ in range(self.Y_FIELD_DIMENSION)]
@@ -166,7 +150,46 @@ class Labyrinth:
         walls_with_zeros[self.y_start][self.x_start] = 1
         self.BFS_WALLS = walls_with_zeros
 
-    # Make all steps until we reach the goal, increase counter
+    # Draw the shortest path
+    def drawShortestPath(self):
+        shortest_path = self.getShortedPath()
+        # iterate through shortest_path arra
+        for row in range(1, len(shortest_path) - 1):
+            coordinates = shortest_path[row]
+            x = coordinates[1]
+            y = coordinates[0]
+            # draw circle to path coordinates
+            self.drawCircle(x, y, self.PURPLE)
+            pg.display.flip()
+            # set speed to low for better visualization
+            self.clock.tick(self.SPEED/5)
+
+    # Find the shortest path and return it
+    def getShortedPath(self):
+        BFS_MAZE = self.BFS_WALLS
+        row, col = (self.y_goal, self.x_goal)
+        counter = BFS_MAZE[row][col]
+        the_path = [(row, col)]
+        while counter > 1:
+            if row > 0 and BFS_MAZE[row - 1][col] == counter - 1:
+                row, col = row - 1, col
+                the_path.append((row, col))
+                counter -= 1
+            elif col > 0 and BFS_MAZE[row][col - 1] == counter - 1:
+                row, col = row, col - 1
+                the_path.append((row, col))
+                counter -= 1
+            elif row < len(BFS_MAZE) - 1 and BFS_MAZE[row + 1][col] == counter - 1:
+                row, col = row+1, col
+                the_path.append((row, col))
+                counter -= 1
+            elif col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col + 1] == counter - 1:
+                row, col = row, col + 1
+                the_path.append((row, col))
+                counter -= 1
+        return the_path
+
+    # Make step by step until we reach goal x, y coordinates
     def makeSteps(self):
         counter = 0
         while self.BFS_WALLS[self.y_goal][self.x_goal] == 0:
@@ -174,76 +197,40 @@ class Labyrinth:
             self.makeStep(counter)
         self.drawShortestPath()
 
-    # Draw the shortest path, line by line
-    def drawShortestPath(self):
-        shortest_path = self.getShortestPath()
-        print("Path: ", shortest_path)
-        for coordinates in shortest_path:
-            x = coordinates[1]
-            y = coordinates[0]
-            self.drawCircle(x, y)
-            pg.display.flip()
-
-    # Get the shortest path from start to target
-    def getShortestPath(self):
-        BFS_MAZE = self.BFS_WALLS
-        i, j = (self.x_goal, self.y_goal)
-        counter = BFS_MAZE[i][j]
-        the_path = [(i, j)]
-        while counter > 1:
-            if i > 0 and BFS_MAZE[i - 1][j] == counter-1:
-                i, j = i-1, j
-                the_path.append((i, j))
-                counter -= 1
-            elif j > 0 and BFS_MAZE[i][j - 1] == counter-1:
-                i, j = i, j-1
-                the_path.append((i, j))
-                counter -= 1
-            elif i < len(BFS_MAZE) - 1 and BFS_MAZE[i + 1][j] == counter-1:
-                i, j = i+1, j
-                the_path.append((i, j))
-                counter -= 1
-            elif j < len(BFS_MAZE[i]) - 1 and BFS_MAZE[i][j + 1] == counter-1:
-                i, j = i, j+1
-                the_path.append((i, j))
-                counter -= 1
-        return the_path
-
-    # Make one step in the maze and draw the dot
+    # Make a step and increase number in BFS_MAZE
+    # BFS_MAZE = matrix filled with 0s and one 1 (start position)
+    # ORIGINAL_MAZE = matrix filled with 0s and 1s (0 = space, 1 = wall)
     def makeStep(self, counter):
-        # m => 0 matrix
-        # a => original matrix
         BFS_MAZE = self.BFS_WALLS
         ORIGINAL_MAZE = self.WALLS
-        for i in range(len(BFS_MAZE)):
-            for j in range(len(BFS_MAZE[i])):
-                if BFS_MAZE[i][j] == counter:
-                    if i > 0 and BFS_MAZE[i-1][j] == 0 and ORIGINAL_MAZE[i-1][j] == 0:
-                        BFS_MAZE[i-1][j] = counter + 1
-                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
-                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+        # iterate over rows
+        for row in range(len(BFS_MAZE)):
+            # iterate over columns
+            for col in range(len(BFS_MAZE[row])):
+                if BFS_MAZE[row][col] == counter:
+                    if row > 0 and BFS_MAZE[row - 1][col] == 0 and ORIGINAL_MAZE[row - 1][col] == 0:
+                        BFS_MAZE[row - 1][col] = counter + 1
+                        self.drawCircle(col, row - 1, self.BLUE)
 
-                    if j > 0 and BFS_MAZE[i][j-1] == 0 and ORIGINAL_MAZE[i][j-1] == 0:
-                        BFS_MAZE[i][j-1] = counter + 1
-                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
-                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+                    if col > 0 and BFS_MAZE[row][col - 1] == 0 and ORIGINAL_MAZE[row][col - 1] == 0:
+                        BFS_MAZE[row][col - 1] = counter + 1
+                        self.drawCircle(col, row, self.BLUE)
 
-                    if i < len(BFS_MAZE)-1 and BFS_MAZE[i+1][j] == 0 and ORIGINAL_MAZE[i+1][j] == 0:
-                        BFS_MAZE[i+1][j] = counter + 1
-                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
-                                                                i * self.BLOCK_SIZE + 12), 6, 0)
+                    if row < len(BFS_MAZE) - 1 and BFS_MAZE[row+1][col] == 0 and ORIGINAL_MAZE[row+1][col] == 0:
+                        BFS_MAZE[row+1][col] = counter + 1
+                        self.drawCircle(col, row, self.BLUE)
 
-                    if j < len(BFS_MAZE[i])-1 and BFS_MAZE[i][j+1] == 0 and ORIGINAL_MAZE[i][j+1] == 0:
-                        BFS_MAZE[i][j+1] = counter + 1
-                        pg.draw.circle(self.WINDOW, self.BLUE, (j * self.BLOCK_SIZE + 12,
-                                                                i * self.BLOCK_SIZE + 12), 6, 0)
-                    self.drawStartPosition()
-                    self.drawGoalPosition()
+                    if col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col+1] == 0 and ORIGINAL_MAZE[row][col+1] == 0:
+                        BFS_MAZE[row][col+1] = counter + 1
+                        self.drawCircle(col, row, self.BLUE)
+                    # draw start circle again with the given color
+                    self.drawCircle(self.x_start, self.y_start, self.GREEN)
+                    # draw goal circle again with the given color
+                    self.drawCircle(self.x_goal, self.y_goal, self.RED)
                     pg.display.update()
                     self.clock.tick(self.SPEED)
 
-    # Checking if given field dimensions are valid.
-    # Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
+    # Checking if given field dimensions are valid. Checking for: emptiness, smaller than 10, if format is between 16:9 / 9:16
     def checkForValidDimensions(self):
         SIXTEEN_BY_NINE_CONSTANT = 1.78
         X_DEVIDED_BY_Y = self.X_FIELD_DIMENSION/self.Y_FIELD_DIMENSION
@@ -253,7 +240,7 @@ class Labyrinth:
             return False
         elif (self.X_FIELD_DIMENSION < 10 or self.Y_FIELD_DIMENSION < 10):
             print("WARNING: Minimum size is 10 blocks by 10 blocks, so atleast {fDIMENSION_BY_BLOCKS} by {fDIMENSION_BY_BLOCKS}.").format(
-                fDIMENSION_BY_BLOCKS=10*self.BLOCK_SIZE)
+                fDIMENSION_BY_BLOCKS=10 * self.BLOCK_SIZE)
             return False
         elif (X_DEVIDED_BY_Y > SIXTEEN_BY_NINE_CONSTANT or Y_DEVIDED_BY_X > SIXTEEN_BY_NINE_CONSTANT):
             print(
@@ -261,4 +248,5 @@ class Labyrinth:
             return False
 
 
-Game = Labyrinth(300, 1, 1, 23, 4)
+# speed, xStart, yStart, xGoal, yGoal
+Game = Labyrinth(75, 1, 1, 23, 21)
