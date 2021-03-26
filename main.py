@@ -1,6 +1,5 @@
 import pygame as pg
 
-
 class Labyrinth:
     # Default Start Position
     x_start = 2
@@ -11,7 +10,7 @@ class Labyrinth:
     y_goal = 24
 
     # Default window/field settings
-    WINDOW_WIDTH = 950
+    WINDOW_WIDTH = 750
     WINDOW_HEIGHT = 700
     BLOCK_SIZE = 25
     BLOCK_MIDDLE_SIZE = BLOCK_SIZE / 2
@@ -47,7 +46,6 @@ class Labyrinth:
         self.x_goal = xEnd
         self.y_goal = yEnd
 
-        # Check if start position is not a wall otherwise quit
         self.readFieldData()
         self.isStartOrGoalPositionAWall()
         self.buildBFSWalls()
@@ -214,15 +212,15 @@ class Labyrinth:
 
                     if col > 0 and BFS_MAZE[row][col - 1] == 0 and ORIGINAL_MAZE[row][col - 1] == 0:
                         BFS_MAZE[row][col - 1] = counter + 1
-                        self.drawCircle(col, row, self.BLUE)
+                        self.drawCircle(col - 1, row, self.BLUE)
 
                     if row < len(BFS_MAZE) - 1 and BFS_MAZE[row+1][col] == 0 and ORIGINAL_MAZE[row+1][col] == 0:
                         BFS_MAZE[row+1][col] = counter + 1
-                        self.drawCircle(col, row, self.BLUE)
+                        self.drawCircle(col, row + 1, self.BLUE)
 
                     if col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col+1] == 0 and ORIGINAL_MAZE[row][col+1] == 0:
                         BFS_MAZE[row][col+1] = counter + 1
-                        self.drawCircle(col, row, self.BLUE)
+                        self.drawCircle(col + 1, row, self.BLUE)
                     # draw start circle again with the given color
                     self.drawCircle(self.x_start, self.y_start, self.GREEN)
                     # draw goal circle again with the given color
@@ -239,7 +237,7 @@ class Labyrinth:
             print("WARNING: Your maze dimensions are empty.")
             return False
         elif (self.X_FIELD_DIMENSION < 10 or self.Y_FIELD_DIMENSION < 10):
-            print("WARNING: Minimum size is 10 blocks by 10 blocks, so atleast {fDIMENSION_BY_BLOCKS} by {fDIMENSION_BY_BLOCKS}.").format(
+            print("WARNING: Minimum size is 10 blocks by 10 blocks.").format(
                 fDIMENSION_BY_BLOCKS=10 * self.BLOCK_SIZE)
             return False
         elif (X_DEVIDED_BY_Y > SIXTEEN_BY_NINE_CONSTANT or Y_DEVIDED_BY_X > SIXTEEN_BY_NINE_CONSTANT):
@@ -249,4 +247,4 @@ class Labyrinth:
 
 
 # speed, xStart, yStart, xGoal, yGoal
-Game = Labyrinth(75, 1, 1, 23, 21)
+Game = Labyrinth(75, 1, 1, 2, 22)
