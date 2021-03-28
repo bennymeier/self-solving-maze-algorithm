@@ -157,36 +157,6 @@ class Labyrinth:
         walls_with_zeros[self.y_start][self.x_start] = 1
         self.BFS_WALLS = walls_with_zeros
 
-    # Find the shortest path and return it
-    def getShortedPath(self):
-        BFS_MAZE = self.BFS_WALLS
-        row, col = (self.y_goal, self.x_goal)
-        counter = BFS_MAZE[row][col]
-        the_path = [(row, col)]
-        # count until the target is reached (which is 1)
-        while counter > 1:
-            # up
-            if row > 0 and BFS_MAZE[row - 1][col] == counter - 1:
-                row, col = row - 1, col
-                the_path.append((row, col))
-                counter -= 1
-            # left
-            elif col > 0 and BFS_MAZE[row][col - 1] == counter - 1:
-                row, col = row, col - 1
-                the_path.append((row, col))
-                counter -= 1
-            # down
-            elif row < len(BFS_MAZE) - 1 and BFS_MAZE[row + 1][col] == counter - 1:
-                row, col = row+1, col
-                the_path.append((row, col))
-                counter -= 1
-            # right
-            elif col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col + 1] == counter - 1:
-                row, col = row, col + 1
-                the_path.append((row, col))
-                counter -= 1
-        return the_path
-
     # Make step by step until we reach goal x, y coordinates
     def makeSteps(self):
         counter = 0
@@ -231,9 +201,39 @@ class Labyrinth:
                     pg.display.update()
                     self.clock.tick(self.SPEED)
 
+    # Find the shortest path and return it
+    def getShortestPath(self):
+        BFS_MAZE = self.BFS_WALLS
+        row, col = (self.y_goal, self.x_goal)
+        counter = BFS_MAZE[row][col]
+        the_path = [(row, col)]
+        # count until the target is reached (which is 1)
+        while counter > 1:
+            # up
+            if row > 0 and BFS_MAZE[row - 1][col] == counter - 1:
+                row, col = row - 1, col
+                the_path.append((row, col))
+                counter -= 1
+            # left
+            elif col > 0 and BFS_MAZE[row][col - 1] == counter - 1:
+                row, col = row, col - 1
+                the_path.append((row, col))
+                counter -= 1
+            # down
+            elif row < len(BFS_MAZE) - 1 and BFS_MAZE[row + 1][col] == counter - 1:
+                row, col = row+1, col
+                the_path.append((row, col))
+                counter -= 1
+            # right
+            elif col < len(BFS_MAZE[row]) - 1 and BFS_MAZE[row][col + 1] == counter - 1:
+                row, col = row, col + 1
+                the_path.append((row, col))
+                counter -= 1
+        return the_path
+
     # Draw the shortest path
     def drawShortestPath(self):
-        shortest_path = self.getShortedPath()
+        shortest_path = self.getShortestPath()
         # iterate through shortest_path list
         for row in range(1, len(shortest_path) - 1):
             coordinates = shortest_path[row]
@@ -268,7 +268,7 @@ class Labyrinth:
         # iterate through c_in_WALLS list
         for row, rowValue in enumerate(x_in_WALLS):
             # If u remove the unused "col" its not working ?
-            for col, colValue in enumerate(rowValue):
+            for _, colValue in enumerate(rowValue):
                 # if colValue == X its replacing the X by a 0. Also setting x_goal and y_goal the coordinates where X was located
                 if colValue == "X":
                     rowValueWithoutSpaces = rowValue.replace(" ", "")
