@@ -7,8 +7,8 @@ class Labyrinth:
     y_start = 2
 
     # Default goal position
-    x_goal = 23
-    y_goal = 24
+    x_goal = 0
+    y_goal = 0
 
     # Default window/field settings
     WINDOW_TITLE = "Self solving maze based on an algorithm by LouisB, EmreG, JonasK, BenjaminM"
@@ -42,16 +42,14 @@ class Labyrinth:
     clock = pg.time.Clock()
 
     # Constructor, overwrite default values
-    def __init__(self, speed, xStart, yStart, xEnd, yEnd):
+    def __init__(self, speed, xStart, yStart):
         # Overwrite default values
         self.SPEED = speed
         self.x_start = xStart
         self.y_start = yStart
-        self.x_goal = xEnd
-        self.y_goal = yEnd
 
         self.readFieldData()
-        self.isStartOrGoalPositionAWall()
+        self.isStartPositionAWall()
         self.buildBFSWalls()
         self.initialize()
 
@@ -87,13 +85,17 @@ class Labyrinth:
     def readFieldData(self):
         # read file in text mode
         with open("field.txt", 'rt') as file:
+            # read first line of field.txt which contains our dimensions for x and y
+            dimensionsFromFile = file.readline()
+            # creating a list without spaces
+            dimensionsAsList = list(map(int, dimensionsFromFile.split()))
             # X dimension of field
-            x_dimension = int(file.readline())
+            x_dimension = dimensionsAsList[0]
             self.X_FIELD_DIMENSION = x_dimension
             # set window width, which dependents on X dimension ( + 1 for extra space)
             self.WINDOW_WIDTH = (x_dimension + 1) * self.BLOCK_SIZE
             # Y dimension of field
-            y_dimension = int(file.readline())
+            y_dimension = dimensionsAsList[1]
             self.Y_FIELD_DIMENSION = y_dimension
             # set window height, which dependents on Y dimension ( + 1 for extra space)
             self.WINDOW_HEIGHT = (y_dimension + 1) * self.BLOCK_SIZE
@@ -105,6 +107,7 @@ class Labyrinth:
             # read rows and create always a new array until \n (line breaks) come in
             rows = file.read().splitlines()
             cols = []
+            rows = self.scanForGoal(rows)
             for line in rows:
                 # splitlines() creates string arrays e.g. ['0', '1', ...]
                 # convert array values from type string to int e.g. [0, 1, ...]
@@ -137,17 +140,11 @@ class Labyrinth:
                                             y_coordinate), 6, 0)
 
     # Check if start or goal position is a wall (1 == wall, 0 == way/free space)
-    def isStartOrGoalPositionAWall(self):
+    def isStartPositionAWall(self):
         res = self.WALLS[self.y_start][self.x_start]
         if res == 1:
             print(
                 "ERROR: Your start position is a wall. Please choose another x and y coordinate.")
-            # Close program
-            exit()
-        res = self.WALLS[self.y_goal][self.x_goal]
-        if res == 1:
-            print(
-                "ERROR: Your goal position is a wall. Please choose another x and y coordinate.")
             # Close program
             exit()
 
@@ -237,7 +234,7 @@ class Labyrinth:
     # Draw the shortest path
     def drawShortestPath(self):
         shortest_path = self.getShortedPath()
-        # iterate through shortest_path arra
+        # iterate through shortest_path list
         for row in range(1, len(shortest_path) - 1):
             coordinates = shortest_path[row]
             x = coordinates[1]
@@ -266,6 +263,21 @@ class Labyrinth:
                 "WARNING: Smallest possible format for field dimensions are 16:9 or 9:16.")
             return False
 
+    # Our Robot ist scaning for the exit, which is signalized with X
+    def scanForGoal(self, x_in_WALLS):
+        # iterate through c_in_WALLS list
+        for row, rowValue in enumerate(x_in_WALLS):
+            # If u remove the unused "col" its not working ?
+            for col, colValue in enumerate(rowValue):
+                # if colValue == X its replacing the X by a 0. Also setting x_goal and y_goal the coordinates where X was located
+                if colValue == "X":
+                    rowValueWithoutSpaces = rowValue.replace(" ", "")
+                    newRowValue = rowValue.replace("X", "0")
+                    x_in_WALLS[row] = newRowValue
+                    self.x_goal, self.y_goal = rowValueWithoutSpaces.index(
+                        "X"), row
+                    return(x_in_WALLS)
 
-# speed, xStart, yStart, xGoal, yGoal
-Game = Labyrinth(65, 1, 1, 2, 22)
+
+# speed, xStart, yStart
+Game = Labyrinth(65, 1, 1)
